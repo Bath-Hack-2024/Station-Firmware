@@ -1,0 +1,4 @@
+board
+adafruit-circuitpython-si7021
+adafruit-circuitpython-bmp280
+picamera
