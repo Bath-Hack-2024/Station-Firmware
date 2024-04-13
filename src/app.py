@@ -14,6 +14,15 @@ def run_weather_station():
 
         station_log(f"Hum: {si7021_humidity}% Temp1: {si7021_temperature}°C, Temp2: {bmp280_temperature}°C, Ps: {bmp280_pressure}hPa")
 
+        picture_path = take_picture(cfg.img_dir)
+
+        if picture_path:
+            print(f"Picture taken: {picture_path}")
+            picture_url = upload_picture(picture_path, cfg.upload_upload_url)
+
+            if picture_url:
+                print(f"Picture uploaded: {picture_url}")
+
         data = {
             "station_id": cfg.station_id,
             "time": datetime.now().isoformat(),
@@ -22,7 +31,8 @@ def run_weather_station():
             "barometric_pressure": bmp280_pressure,
             "lat": cfg.station_lat,
             "lon": cfg.station_lon,
-            "elevation": cfg.station_elevation
+            "elevation": cfg.station_elevation,
+            "img_url": picture_url
         }
 
         error = upload_sensor_data(data)
