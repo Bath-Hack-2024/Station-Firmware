@@ -3,6 +3,10 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
+import ephem
+from datetime import datetime
+import math
+
 
 # Define the CNN architecture (same as the one used during training)
 class CNN(nn.Module):
@@ -49,6 +53,10 @@ def hasClouds(image: Image):
     Returns:
         bool: true if a cloud present, false if not
     """
+    
+    if(type(image)!=Image):
+        raise TypeError("image argument must be of type Image")
+    
     # Load the saved model
     model = CNN()
     model.load_state_dict(torch.load('CloudWeights.pth'))
@@ -84,6 +92,14 @@ def getCloudCoverPercentage(filepath: str):
     Returns:
         int: percentage of the image with cloud cover
     """
+    if(type(filepath)!=str):
+        raise TypeError("Filepath argument must be of type string")
+    
+    try:
+        f = open(filepath)
+    except:
+        raise FileNotFoundError("File "+filepath+" not found or inaccessible")
+    
     # Load the image
     image = Image.open(filepath)
 
@@ -116,3 +132,68 @@ def getCloudCoverPercentage(filepath: str):
     
     return cloudPercentage
 
+
+def getMoonPhase():
+    """
+        Gets the current phase of the moon
+    """
+    # Example: Specific date in UTC
+    date = datetime.now()
+    
+    moon = ephem.Moon(date)
+    moon_phase = moon.phase
+    
+    phases = {
+    0: "New Moon",
+    0.25: "Waxing Crescent",
+    0.5: "First Quarter",
+    0.75: "Waxing Gibbous",
+    1: "Full Moon",
+    1.25: "Waning Gibbous",
+    1.5: "Last Quarter",
+    1.75: "Waning Crescent"
+}
+
+    # Find the closest phase based on the value
+    closest_phase = min(phases, key=lambda x: abs(x - moon_phase))
+
+    return{phases[closest_phase]}
+
+def isMoonVisible(latitude: float, longitude: float):
+    if(type(latitude)!=float):
+        raise TypeError("Latitude argument not of type float")
+    if(type(longitude)!=float): 
+        raise TypeError("Longitude argument not of type float")
+    
+    observer = ephem.Observer()
+    observer.lat = str(latitude)  # Latitude in degrees
+    observer.lon = str(longitude)  # Longitude in degrees
+
+    # Compute the observer's local sidereal time (LST)
+    observer.date = datetime.now()
+    lst = observer.sidereal_time()
+
+    # Moon
+    moon = ephem.Moon()
+    moon.compute(observer)
+
+    # Calculate Moon's Local Hour Angle (LHA)
+    ramoon = moon.ra  # Right Ascension of the Moon
+    lha = lst - ramoon
+
+    # Check if Moon is above the horizon
+    decmoon = moon.dec  # Declination of the Moon
+    lat = math.radians(latitude)
+    dec = math.radians(decmoon)
+    lha = math.radians(lha)
+    altitude = math.asin(math.sin(dec) * math.sin(lat) + math.cos(dec) * math.cos(lat) * math.cos(lha))
+    altitude_deg = math.degrees(altitude)
+
+    # Check if Moonrise and Moonset
+    moon_rise = observer.previous_rising(moon)
+    moon_set = observer.next_setting(moon)
+
+    # Check if Moon is above horizon
+    return altitude_deg > 0
+
+print(isMoonVisible(127,127))

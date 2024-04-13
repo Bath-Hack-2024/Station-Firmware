@@ -6,19 +6,48 @@ from time import sleep
 import os
 
 def getTemperatureAndHumidity():
+    """
+    Gets the temperature and humidity from the SI7021 sensor
+
+    Returns:
+        tuple: tuple of temperature, relative humidity
+    """
     I2C = board.I2C()
     #Temperature and humidity here
     tempHumiditySensor = adafruit_si7021.SI7021(I2C)
     return tempHumiditySensor.temperature, tempHumiditySensor.relative_humidity
 
 def getPressureAndTemperature():
+    """
+    Gets the pressure and temperature from the BMP280 sensor
+
+    Returns:
+        tuple: tuple of temperature and pressure
+    """
     I2C = board.I2C()
     #pressure and temperature here
     pressureSensor = adafruit_bmp280.Adafruit_BMP280_I2C(I2C)
     return pressureSensor.temperature, pressureSensor.pressure
 
 
-def get_next_image_number(directory):
+def get_next_image_number(directory: str):
+    """
+    Gets the next image number in a directory
+
+    Args:
+        directory (str): the directory to write the file to
+
+    Raises:
+        FileNotFoundError: If the file isn't found, raise an Error
+
+    Returns:
+        int: highest next available image number, or 1 if nothing exists yet
+    """
+    try:
+        f = open(directory)
+    except:
+        raise FileNotFoundError("directory "+directory+" not found or inaccessible")
+    
     # Get a list of files in the directory
     files = os.listdir(directory)
 
@@ -37,6 +66,13 @@ def get_next_image_number(directory):
 
 
 def getImage(filepath: str):
+    """
+    takes an image from the camera and saves it to filepath
+
+    Args:
+        filepath (str): The file path to save the image to
+    """
+    
     #takes a photo and saves the image to the filepath as imageX.jpg, where X is the lowest free number in the file
     camera = PiCamera()
     camera.resolution = (2592, 1944)

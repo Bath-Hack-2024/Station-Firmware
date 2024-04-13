@@ -2,3 +2,10 @@ board
 adafruit-circuitpython-si7021
 adafruit-circuitpython-bmp280
 picamera
+torch
+torchvision.transforms
+PIL
+numpy
+PyEphem
+math
+datetime
