@@ -26,9 +26,9 @@ def run_weather_station():
         data = {
             "station_id": cfg.station_id,
             "time": datetime.now().isoformat(),
-            "temperature": temp_avg,
-            "humidity": si7021_humidity,
-            "barometric_pressure": bmp280_pressure,
+            "temperature": round(temp_avg, 4),
+            "humidity": round(si7021_humidity, 4),
+            "barometric_pressure": round(bmp280_pressure, 4),
             "lat": cfg.station_lat,
             "lon": cfg.station_lon,
             "elevation": cfg.station_elevation,
