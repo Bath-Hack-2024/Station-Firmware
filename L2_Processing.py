@@ -6,7 +6,7 @@ import numpy as np
 import ephem
 from datetime import datetime
 import math
-
+import numpy as np
 
 # Define the CNN architecture (same as the one used during training)
 class CNN(nn.Module):
@@ -197,7 +197,7 @@ def isMoonVisible(latitude: float, longitude: float):
     return altitude_deg > 0
 
 
-def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, moonPhase: str, moonVisible: bool, dewPointSpread: float):
+def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, moonPhase: str, moonVisible: bool, dewPointSpread: float, wobble=None):
     """
     gets the current score for a location based on the conditions that impact the quality of astral photography
 
@@ -207,6 +207,7 @@ def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, mo
         moonPhase (str): the current phase of the moon
         moonVisible (bool): is the onn visible
         dewPointSpread (float): the current dew point spread level
+        wobble (float) : default = None. Atmospheric wobble
 
     Raises:
         TypeError: for cloud cover
@@ -214,6 +215,7 @@ def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, mo
         TypeError: tests moon phase
         TypeError: moon visibility 
         TypeError: dew point spread
+        TypeError: Wobble error 
 
     Returns:
         int: score 
@@ -246,19 +248,23 @@ def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, mo
             score *= 0.2
 
     #Accounts for cloud cover percentage - exponentially lower the higher the cloud cover
-    score = score * (10**(-0.01*cloudCoverPercentage))
+    score *= (10**(-0.01*cloudCoverPercentage))
 
     #Accounts for fog cover percentage - exponentially lower but not quite as quick as cloud cover with more fog
-    score = score * (10**(-0.005*fogCoverPercentage))
+    score *= (10**(-0.005*fogCoverPercentage))
 
     #Accounts for Dew Point spread. Higher absolute values of dew point spread are better
-    score = score * (10**((0.00006*dewPointSpread)-0.006))
+    score *= (10**((0.00006*dewPointSpread)-0.006))
+    
+    #Wobble
+    if wobble is not None:
+        score *= np.min([1, 1.05-(0.01*wobble)])
     
     return score
 
 
     
-print(getCurrentScore(5, 12, "New Moon", True, 40))
+print(getCurrentScore(5, 12, "New Moon", True, 40, 5))
 print(isMoonVisible(51.3782, -2.3264))
 print(getMoonPhase())
     
