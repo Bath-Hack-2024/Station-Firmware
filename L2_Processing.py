@@ -54,9 +54,6 @@ def hasClouds(image: Image):
         bool: true if a cloud present, false if not
     """
     
-    if(type(image)!=Image):
-        raise TypeError("image argument must be of type Image")
-    
     # Load the saved model
     model = CNN()
     model.load_state_dict(torch.load('CloudWeights.pth'))
@@ -157,7 +154,7 @@ def getMoonPhase():
     # Find the closest phase based on the value
     closest_phase = min(phases, key=lambda x: abs(x - moon_phase))
 
-    return{phases[closest_phase]}
+    return phases[closest_phase]
 
 def isMoonVisible(latitude: float, longitude: float):
     if(type(latitude)!=float):
@@ -197,7 +194,7 @@ def isMoonVisible(latitude: float, longitude: float):
     return altitude_deg > 0
 
 
-def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, moonPhase: str, moonVisible: bool, dewPointSpread: float, wobble=None):
+def getCurrentScore(cloudCoverPercentage = None, fogCoverPercentage = None , moonPhase = None, moonVisible = None, dewPointSpread = None, wobble=None):
     """
     gets the current score for a location based on the conditions that impact the quality of astral photography
 
@@ -232,29 +229,33 @@ def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, mo
         raise TypeError("Dew point spread should be numeric")
     
     score = 100.0
-    #deals with the moon. If it isn't visible, no impact, otherwise score decreases with the brightness (phase)
-    if not moonVisible:
-        pass
-    else:
-        if moonPhase=="New Moon":
-            score *= 0.8
-        elif moonPhase=="Waxing Crescent" or moonPhase=="Waning Crescent":
-            score *= 0.65
-        elif moonPhase=="First Quarter" or moonPhase=="Last Quarter":
-            score *= 0.5
-        elif moonPhase=="Waxing Gibbous" or moonPhase=="Waning Gibbous":
-            score *= 0.35
-        elif moonPhase=="Full Moon":
-            score *= 0.2
+    if moonVisible is not None:
+        #deals with the moon. If it isn't visible, no impact, otherwise score decreases with the brightness (phase)
+        if not moonVisible:
+            pass
+        else:
+            if moonPhase=="New Moon":
+                score *= 0.8
+            elif moonPhase=="Waxing Crescent" or moonPhase=="Waning Crescent":
+                score *= 0.65
+            elif moonPhase=="First Quarter" or moonPhase=="Last Quarter":
+                score *= 0.5
+            elif moonPhase=="Waxing Gibbous" or moonPhase=="Waning Gibbous":
+                score *= 0.35
+            elif moonPhase=="Full Moon":
+                score *= 0.2
 
-    #Accounts for cloud cover percentage - exponentially lower the higher the cloud cover
-    score *= (10**(-0.01*cloudCoverPercentage))
+    if cloudCoverPercentage is not None:
+        #Accounts for cloud cover percentage - exponentially lower the higher the cloud cover
+        score *= (10**(-0.01*cloudCoverPercentage))
 
-    #Accounts for fog cover percentage - exponentially lower but not quite as quick as cloud cover with more fog
-    score *= (10**(-0.005*fogCoverPercentage))
-
-    #Accounts for Dew Point spread. Higher absolute values of dew point spread are better
-    score *= (10**((0.00006*dewPointSpread)-0.006))
+    if fogCoverPercentage is not None:
+        #Accounts for fog cover percentage - exponentially lower but not quite as quick as cloud cover with more fog
+        score *= (10**(-0.005*fogCoverPercentage))
+        
+    if dewPointSpread is not None:
+        #Accounts for Dew Point spread. Higher absolute values of dew point spread are better
+        score *= (10**((0.00006*dewPointSpread)-0.006))
     
     #Wobble
     if wobble is not None:
@@ -263,9 +264,5 @@ def getCurrentScore(cloudCoverPercentage : float, fogCoverPercentage : float, mo
     return score
 
 
-    
-print(getCurrentScore(5, 12, "New Moon", True, 40, 5))
-print(isMoonVisible(51.3782, -2.3264))
-print(getMoonPhase())
     
     
